@@ -1,25 +1,10 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <time.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/uio.h>
+#include <arpa/inet.h>
+#include <errno.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include <sys/un.h>
 
-#define SERV_PORT 9877
-#define MAXLINE 80
-#define LISTENQ 1024
 #define SA struct sockaddr
 
 typedef struct
@@ -28,27 +13,22 @@ typedef struct
   union mydata{
     float dElmt;
     unsigned int iElmt;
-  } a[10];
+  } arr[10];
 } MyMsg_t;
 
 void ConvertToHostByteOrder(MyMsg_t *msg)
 {
-  int i,j;
-  unsigned char rb[80];
- 
+  int i;
   msg->numElmt = ntohl(msg->numElmt);
 
   for(i=0; i<(msg->numElmt); i++)
-  {
-    msg->a[i].iElmt = ntohl(msg->a[i].iElmt); 
-  }
-
+    msg->arr[i].iElmt = ntohl(msg->arr[i].iElmt);
+ 
   for(i=0; i<msg->numElmt; i++)
-    printf("%e ", msg->a[i].dElmt);
+    printf("%e ", msg->arr[i].dElmt);
+
   printf("\n");
-
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -66,19 +46,18 @@ int main(int argc, char *argv[])
   servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   servAddr.sin_port = htons(atoi(argv[1]));
   numRxMsg = atoi(argv[2]);
+
   if(bind(sockfd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
   {
     if(errno == EADDRINUSE)
-    {
       printf("Bind error ... Port is still in use\n");
-    }
     else
-    {
       printf("Bind error ... \n"); 
-    }
     exit(0);
   }
+
   cliAddrLen = sizeof(cliAddr);
+
   bzero(cli_ip_addr, 16);
 
   while(recvfrom(sockfd, &rxMsg, sizeof(rxMsg), 0, (struct sockaddr *)&cliAddr, &cliAddrLen))
@@ -99,7 +78,7 @@ int main(int argc, char *argv[])
     {
       sleep(1);
       printf("Asking for next message\n");
-      sendto(sockfd, txMsg, sizeof(txMsg), 0, (struct sockaddr *)&cliAddr, cliAddrLen); 
+      sendto(sockfd, txMsg, strlen(txMsg) + 1, 0, (struct sockaddr *)&cliAddr, cliAddrLen); 
 
     }
   }
