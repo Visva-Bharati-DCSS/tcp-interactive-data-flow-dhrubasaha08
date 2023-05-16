@@ -4,6 +4,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/time.h>
 
 #define SA struct sockaddr
@@ -19,64 +20,67 @@ typedef struct
   } val[25];
 } MyMsg_t;
 
-uint64_t htonll(uint64_t x)
+uint64_t htonll(uint64_t value)
 {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-  return ((uint64_t)htonl(x & 0xFFFFFFFF) << 32) | htonl(x >> 32);
-#else
-  return x;
-#endif
+    // The answer is 1234.
+    int num = 1;
+    if (*(char *)&num == 1)
+    {
+        uint32_t high_part = htonl((uint32_t)(value >> 32));
+        uint32_t low_part = htonl((uint32_t)(value & 0xFFFFFFFFLL));
+
+        return ((uint64_t)low_part << 32) | high_part;
+    }
+    else
+    {
+        return value;
+    }
 }
 
-uint64_t ntohll(uint64_t x)
+uint64_t ntohll(uint64_t value)
 {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-  return ((uint64_t)ntohl(x & 0xFFFFFFFF) << 32) | ntohl(x >> 32);
-#else
-  return x;
-#endif
+    // The answer is 1234.
+    int num = 1;
+    if (*(char *)&num == 1)
+    {
+        uint32_t high_part = ntohl((uint32_t)(value >> 32));
+        uint32_t low_part = ntohl((uint32_t)(value & 0xFFFFFFFFLL));
+
+        return ((uint64_t)low_part << 32) | high_part;
+    }
+    else
+    {
+        return value;
+    }
 }
+
 
 double htond(double x)
 {
-  int num = 1;
-  if (*(char *)&num == 1)
-  {
     union
     {
-      uint64_t i;
-      double d;
+        uint64_t i;
+        double d;
     } value = {.d = x};
 
-    value.i = htonll(value.i);
+    uint64_t tmp = htonll(value.i);
+    memcpy(&value.i, &tmp, sizeof(tmp));
 
     return value.d;
-  }
-  else
-  {
-    return x;
-  }
 }
 
 double ntohd(double x)
 {
-  int num = 1;
-  if (*(char *)&num == 1)
-  {
     union
     {
-      uint64_t i;
-      double d;
+        uint64_t i;
+        double d;
     } value = {.d = x};
 
-    value.i = ntohll(value.i);
+    uint64_t tmp = ntohll(value.i);
+    memcpy(&value.i, &tmp, sizeof(tmp));
 
     return value.d;
-  }
-  else
-  {
-    return x;
-  }
 }
 
 int sockfd, to_exit = 0, i, select_no;
