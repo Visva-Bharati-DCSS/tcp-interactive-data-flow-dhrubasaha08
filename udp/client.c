@@ -80,16 +80,21 @@ int main(int argc, char *argv[])
     myMsg_t msg;
     msg.id = 1;      // client ID
     msg.numElmt = 5; // send 5 elements at a time
-    for (int i = 0; i < 5; ++i)
-    {
-        msg.val[i] = generate_random_double(vMsg.v);
-        printf("Generated value: %f\n", msg.val[i]);
-    }
 
-    if (sendto(sockfd, &msg, sizeof(msg), 0,
-               (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+    while (1)
     {
-        perror("Failed to send data");
+        for (int i = 0; i < msg.numElmt; ++i)
+        {
+            msg.val[i] = generate_random_double(vMsg.v);
+            printf("Generated value: %f\n", msg.val[i]);
+        }
+
+        if (sendto(sockfd, &msg, sizeof(msg), 0,
+                   (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+        {
+            perror("Failed to send data");
+        }
+        sleep(1); // sleep for a second before sending another packet of data
     }
 
     close(sockfd);

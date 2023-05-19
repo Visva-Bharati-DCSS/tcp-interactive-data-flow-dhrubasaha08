@@ -60,7 +60,7 @@ void handle_message(myMsg_t *msg, struct sockaddr_in *addr, int sockfd, double v
         double value = msg->val[i];
         add_value(msg->id, value);
 
-        double average = clients[msg->id].total / clients[msg->id].numValues;
+        double average = (clients[msg->id].numValues) ? (clients[msg->id].total / clients[msg->id].numValues) : 0;
         if (average > 0.75 * v)
         {
             fprintf(log_file, "Client %s has average %f exceeding 0.75*v\n", client_id, average);
